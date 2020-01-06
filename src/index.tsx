@@ -17,6 +17,10 @@ type ExcalidrawTextElement = ExcalidrawElement & {
   text: string;
   actualBoundingBoxAscent: number;
 };
+type Point = {
+  x: number;
+  y: number;
+};
 
 const LOCAL_STORAGE_KEY = "excalidraw";
 const LOCAL_STORAGE_KEY_STATE = "excalidraw-state";
@@ -222,6 +226,23 @@ function hitTest(element: ExcalidrawElement, x: number, y: number): boolean {
   }
 }
 
+function rotateTest(
+  element: ExcalidrawElement,
+  x: number,
+  y: number,
+  sceneState: SceneState
+): boolean {
+  if (element.type !== "rectangle") return false;
+
+  const handler = rotationHandlerRectangle(element, sceneState);
+  return (
+    x + sceneState.scrollX >= handler[0] - 4 &&
+    x + sceneState.scrollX <= handler[0] + 4 &&
+    y + sceneState.scrollY >= handler[1] - 4 &&
+    y + sceneState.scrollY <= handler[1] + 4
+  );
+}
+
 function resizeTest(
   element: ExcalidrawElement,
   x: number,
@@ -261,7 +282,8 @@ function newElement(
   roughness: number,
   opacity: number,
   width = 0,
-  height = 0
+  height = 0,
+  rotation = 0
 ) {
   const element = {
     type: type,
@@ -269,6 +291,7 @@ function newElement(
     y: y,
     width: width,
     height: height,
+    rotation: rotation,
     isSelected: false,
     strokeColor: strokeColor,
     backgroundColor: backgroundColor,
@@ -395,6 +418,29 @@ function isOverScrollBars(
   };
 }
 
+function rotationHandlerRectangle(
+  element: ExcalidrawElement,
+  sceneState: SceneState
+) {
+  const handlerXPositive = element.width > 0 ? 1 : -1;
+  const handlerYPositive = element.height > 0 ? 1 : -1;
+  const x =
+    element.x +
+    element.width / 2 +
+    sceneState.scrollX -
+    Math.sin((element.rotation * Math.PI) / 180) *
+      (element.width / 2 + 32 * handlerXPositive);
+  const y =
+    element.y +
+    element.height / 2 +
+    sceneState.scrollY -
+    Math.cos((element.rotation * Math.PI) / 180) *
+      (element.height / 2 + 32 * handlerYPositive);
+
+  const handler = [x, y, 4, 4];
+  return handler;
+}
+
 function handlerRectangles(element: ExcalidrawElement, sceneState: SceneState) {
   const elementX1 = element.x;
   const elementX2 = element.x + element.width;
@@ -516,19 +562,54 @@ function renderScene(
     element.draw(rc, context, sceneState);
     if (renderSelection && element.isSelected) {
       const margin = 4;
-
-      const elementX1 = getElementAbsoluteX1(element);
-      const elementX2 = getElementAbsoluteX2(element);
-      const elementY1 = getElementAbsoluteY1(element);
-      const elementY2 = getElementAbsoluteY2(element);
       const lineDash = context.getLineDash();
       context.setLineDash([8, 4]);
-      context.strokeRect(
-        elementX1 - margin + sceneState.scrollX,
-        elementY1 - margin + sceneState.scrollY,
-        elementX2 - elementX1 + margin * 2,
-        elementY2 - elementY1 + margin * 2
+      context.beginPath();
+
+      const centerX = element.width / 2;
+      const centerY = element.height / 2;
+      const p1 = calculateRectangleVertexFromAngle(
+        centerX,
+        centerY,
+        0,
+        0,
+        element.rotation,
+        margin
       );
+      const p2 = calculateRectangleVertexFromAngle(
+        centerX,
+        centerY,
+        element.width,
+        0,
+        element.rotation,
+        margin
+      );
+      const p3 = calculateRectangleVertexFromAngle(
+        centerX,
+        centerY,
+        element.width,
+        element.height,
+        element.rotation,
+        margin
+      );
+      const p4 = calculateRectangleVertexFromAngle(
+        centerX,
+        centerY,
+        0,
+        element.height,
+        element.rotation,
+        margin
+      );
+      const offsetX = sceneState.scrollX + element.x + element.width / 2;
+      const offsetY = sceneState.scrollY + element.y + element.height / 2;
+
+      context.moveTo(p1.x + offsetX, p1.y + offsetY);
+      context.lineTo(p2.x + offsetX, p2.y + offsetY);
+      context.lineTo(p3.x + offsetX, p3.y + offsetY);
+      context.lineTo(p4.x + offsetX, p4.y + offsetY);
+      context.closePath();
+      context.stroke();
+
       context.setLineDash(lineDash);
 
       if (element.type !== "text" && selectedIndices.length === 1) {
@@ -536,6 +617,19 @@ function renderScene(
         Object.values(handlers).forEach(handler => {
           context.strokeRect(handler[0], handler[1], handler[2], handler[3]);
         });
+
+        context.beginPath();
+        const rotationHandler = rotationHandlerRectangle(element, sceneState);
+        context.ellipse(
+          rotationHandler[0], // x
+          rotationHandler[1], // y
+          rotationHandler[2], // radiusX
+          rotationHandler[3], // radiusY
+          0, // rotation,
+          0, // start angle
+          Math.PI * 2 // end angle
+        );
+        context.stroke();
       }
     }
   });
@@ -754,6 +848,31 @@ function getDiamondPoints(element: ExcalidrawElement) {
   return [topX, topY, rightX, rightY, bottomX, bottomY, leftX, leftY];
 }
 
+function calculateRectangleVertexFromAngle(
+  cx: number,
+  cy: number,
+  x: number,
+  y: number,
+  degrees: number,
+  margin = 0
+): Point {
+  // apply margin
+  x = x > cx ? x + margin : x - margin;
+  y = y > cy ? y + margin : y - margin;
+
+  // translate point to origin
+  const tempX = x - cx;
+  const tempY = y - cy;
+  const theta = (-1 * (degrees * Math.PI)) / 180;
+
+  // now apply rotation
+  const rotatedX = tempX * Math.cos(theta) - tempY * Math.sin(theta);
+  const rotatedY = tempX * Math.sin(theta) + tempY * Math.cos(theta);
+
+  // translate back
+  return { x: rotatedX + 0, y: rotatedY + 0 };
+}
+
 function generateDraw(element: ExcalidrawElement) {
   if (element.type === "selection") {
     element.draw = (rc, context, { scrollX, scrollY }) => {
@@ -769,19 +888,65 @@ function generateDraw(element: ExcalidrawElement) {
     };
   } else if (element.type === "rectangle") {
     const shape = withCustomMathRandom(element.seed, () => {
-      return generator.rectangle(0, 0, element.width, element.height, {
-        stroke: element.strokeColor,
-        fill: element.backgroundColor,
-        fillStyle: element.fillStyle,
-        strokeWidth: element.strokeWidth,
-        roughness: element.roughness
-      });
+      const centerX = element.width / 2;
+      const centerY = element.height / 2;
+      const p1 = calculateRectangleVertexFromAngle(
+        centerX,
+        centerY,
+        0,
+        0,
+        element.rotation
+      );
+      const p2 = calculateRectangleVertexFromAngle(
+        centerX,
+        centerY,
+        element.width,
+        0,
+        element.rotation
+      );
+      const p3 = calculateRectangleVertexFromAngle(
+        centerX,
+        centerY,
+        element.width,
+        element.height,
+        element.rotation
+      );
+      const p4 = calculateRectangleVertexFromAngle(
+        centerX,
+        centerY,
+        0,
+        element.height,
+        element.rotation
+      );
+      return generator.polygon(
+        [
+          [p1.x, p1.y],
+          [p2.x, p2.y],
+          [p3.x, p3.y],
+          [p4.x, p4.y]
+        ],
+        {
+          stroke: element.strokeColor,
+          fill: element.backgroundColor,
+          fillStyle: element.fillStyle,
+          strokeWidth: element.strokeWidth,
+          roughness: element.roughness
+        }
+      );
     });
     element.draw = (rc, context, { scrollX, scrollY }) => {
       context.globalAlpha = element.opacity / 100;
-      context.translate(element.x + scrollX, element.y + scrollY);
-      rc.draw(shape);
-      context.translate(-element.x - scrollX, -element.y - scrollY);
+      context.translate(
+        element.x + scrollX + element.width / 2,
+        element.y + scrollY + element.height / 2
+      );
+      if (element.width !== 0 && element.height !== 0) {
+        rc.draw(shape);
+      }
+      context.translate(
+        -element.x - scrollX - element.width / 2,
+        -element.y - scrollY - element.height / 2
+      );
       context.globalAlpha = 1;
     };
   } else if (element.type === "diamond") {
@@ -797,7 +962,12 @@ function generateDraw(element: ExcalidrawElement) {
         leftY
       ] = getDiamondPoints(element);
       return generator.polygon(
-        [[topX, topY], [rightX, rightY], [bottomX, bottomY], [leftX, leftY]],
+        [
+          [topX, topY],
+          [rightX, rightY],
+          [bottomX, bottomY],
+          [leftX, leftY]
+        ],
         {
           stroke: element.strokeColor,
           fill: element.backgroundColor,
@@ -985,6 +1155,7 @@ function restore(
 type AppState = {
   draggingElement: ExcalidrawElement | null;
   resizingElement: ExcalidrawElement | null;
+  rotatingElement: ExcalidrawElement | null;
   elementType: string;
   exportBackground: boolean;
   currentItemStrokeColor: string;
@@ -1273,6 +1444,7 @@ class App extends React.Component<{}, AppState> {
   public state: AppState = {
     draggingElement: null,
     resizingElement: null,
+    rotatingElement: null,
     elementType: "selection",
     exportBackground: true,
     currentItemStrokeColor: "#000000",
@@ -1749,6 +1921,7 @@ class App extends React.Component<{}, AppState> {
             let resizeHandle: string | false = false;
             let isDraggingElements = false;
             let isResizingElements = false;
+            let isRotatingElements = false;
             if (this.state.elementType === "selection") {
               const resizeElement = elements.find(element => {
                 return resizeTest(element, x, y, {
@@ -1757,9 +1930,17 @@ class App extends React.Component<{}, AppState> {
                   viewBackgroundColor: this.state.viewBackgroundColor
                 });
               });
+              const rotateElement = elements.find(element => {
+                return rotateTest(element, x, y, {
+                  scrollX: this.state.scrollX,
+                  scrollY: this.state.scrollY,
+                  viewBackgroundColor: this.state.viewBackgroundColor
+                });
+              });
 
               this.setState({
-                resizingElement: resizeElement ? resizeElement : null
+                resizingElement: resizeElement ?? null,
+                rotatingElement: rotateElement ?? null
               });
 
               if (resizeElement) {
@@ -1770,6 +1951,9 @@ class App extends React.Component<{}, AppState> {
                 });
                 document.documentElement.style.cursor = `${resizeHandle}-resize`;
                 isResizingElements = true;
+              } else if (rotateElement) {
+                document.documentElement.style.cursor = "alias";
+                isRotatingElements = true;
               } else {
                 const hitElement = getElementAtPosition(x, y);
 
@@ -1899,6 +2083,33 @@ class App extends React.Component<{}, AppState> {
 
                     el.x = element.x;
                     el.y = element.y;
+                    generateDraw(el);
+                  });
+                  lastX = x;
+                  lastY = y;
+                  // We don't want to save history when resizing an element
+                  skipHistory = true;
+                  this.forceUpdate();
+                  return;
+                }
+              }
+
+              if (isRotatingElements && this.state.rotatingElement) {
+                const el = this.state.rotatingElement;
+                const selectedElements = elements.filter(el => el.isSelected);
+                if (selectedElements.length === 1) {
+                  const x =
+                    e.clientX - CANVAS_WINDOW_OFFSET_LEFT - this.state.scrollX;
+                  const y =
+                    e.clientY - CANVAS_WINDOW_OFFSET_TOP - this.state.scrollY;
+                  selectedElements.forEach(element => {
+                    const midpointX = element.x + element.width / 2;
+                    const midpointY = element.y + element.height / 2;
+
+                    const rotation =
+                      Math.atan2(midpointX - lastX, midpointY - lastY) *
+                      (180 / Math.PI);
+                    el.rotation = rotation;
                     generateDraw(el);
                   });
                   lastX = x;
