@@ -863,7 +863,6 @@ export class App extends React.Component<any, AppState> {
                   if (!isHoldingSpace) {
                     setCursorForShape(this.state.elementType);
                   }
-                  history.resumeRecording();
                   window.removeEventListener("mousemove", onMouseMove);
                   window.removeEventListener("mouseup", teardown);
                   window.removeEventListener("blur", teardown);
@@ -1567,7 +1566,6 @@ export class App extends React.Component<any, AppState> {
                   this.setState({
                     draggingElement: null,
                   });
-                  history.resumeRecording();
                   return;
                 }
 
@@ -1609,7 +1607,6 @@ export class App extends React.Component<any, AppState> {
                   // if no element is clicked, clear the selection and redraw
                   elements = clearSelection(elements);
                   this.setState({});
-                  history.resumeRecording();
                   return;
                 }
 
@@ -1632,7 +1629,6 @@ export class App extends React.Component<any, AppState> {
                   });
                 }
 
-                history.resumeRecording();
                 this.setState({});
               };
 
@@ -1813,15 +1809,10 @@ export class App extends React.Component<any, AppState> {
     const { deltaX, deltaY } = e;
     // We don't want to save history when panning around
     history.skipRecording();
-    this.setState(
-      state => ({
-        scrollX: state.scrollX - deltaX,
-        scrollY: state.scrollY - deltaY,
-      }),
-      () => {
-        history.resumeRecording();
-      },
-    );
+    this.setState(state => ({
+      scrollX: state.scrollX - deltaX,
+      scrollY: state.scrollY - deltaY,
+    }));
   };
 
   private addElementsFromPaste = (paste: string) => {
@@ -1915,6 +1906,8 @@ export class App extends React.Component<any, AppState> {
           elements,
         ),
       );
+    } else {
+      history.resumeRecording();
     }
   }
 }
