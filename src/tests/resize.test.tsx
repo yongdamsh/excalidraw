@@ -60,12 +60,20 @@ describe("resize element with aspect ratio when SHIFT is clicked", () => {
     const { getByToolName, container } = render(<App />);
     const canvas = container.querySelector("canvas")!;
 
+    const elementX = 30;
+    const elementY = 20;
+    const elementWidth = 30;
+    const elementHeight = 50;
+
     {
       // create element
       const tool = getByToolName("rectangle");
       fireEvent.click(tool);
-      fireEvent.mouseDown(canvas, { clientX: 30, clientY: 20 });
-      fireEvent.mouseMove(canvas, { clientX: 60, clientY: 70 });
+      fireEvent.mouseDown(canvas, { clientX: elementX, clientY: elementY });
+      fireEvent.mouseMove(canvas, {
+        clientX: elementX + elementWidth,
+        clientY: elementY + elementHeight,
+      });
       fireEvent.mouseUp(canvas);
 
       expect(renderScene).toHaveBeenCalledTimes(4);
@@ -74,7 +82,7 @@ describe("resize element with aspect ratio when SHIFT is clicked", () => {
       expect(selectionElement).toBeNull();
       expect(elements.length).toEqual(1);
       expect(elements[0].isSelected).toBeTruthy();
-      expect([elements[0].x, elements[0].y]).toEqual([30, 20]);
+      expect([elements[0].x, elements[0].y]).toEqual([elementX, elementY]);
 
       renderScene.mockClear();
     }
@@ -85,14 +93,20 @@ describe("resize element with aspect ratio when SHIFT is clicked", () => {
 
     // select a handler rectangle (top-left)
     fireEvent.mouseDown(canvas, { clientX: 21, clientY: 13 });
-    fireEvent.mouseMove(canvas, { clientX: 20, clientY: 40, shiftKey: true });
+    fireEvent.mouseMove(canvas, { clientX: 20, clientY: 40, shiftKey: true }); // Move mouse 1px to the left
     fireEvent.mouseUp(canvas);
 
     expect(renderScene).toHaveBeenCalledTimes(5);
     const elements = renderScene.mock.calls[4][0];
     expect(renderScene.mock.calls[4][1]).toBeNull();
     expect(elements.length).toEqual(1);
-    expect([elements[0].x, elements[0].y]).toEqual([29, 39]);
-    expect([elements[0].width, elements[0].height]).toEqual([31, 31]);
+    expect([elements[0].x, elements[0].y]).toEqual([
+      elementX - 1,
+      elementY - 1,
+    ]);
+    expect([elements[0].width, elements[0].height]).toEqual([
+      elementWidth + 1,
+      elementHeight + 1,
+    ]); // Size should have increased by 1px in both width and height
   });
 });
