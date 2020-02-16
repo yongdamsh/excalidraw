@@ -1359,13 +1359,18 @@ export class App extends React.Component<any, AppState> {
                             e.shiftKey,
                           );
                         } else {
-                          element.width -= deltaX;
-                          element.x += deltaX;
-
                           if (e.shiftKey) {
-                            element.y += element.height - element.width;
-                            element.height = element.width;
+                            // Aspect ratio transformation
+                            element.width -= deltaX;
+                            element.x += deltaX;
+
+                            element.height -= deltaX;
+                            element.y += deltaX;
                           } else {
+                            // Free transformation
+                            element.width -= deltaX;
+                            element.x += deltaX;
+
                             element.height -= deltaY;
                             element.y += deltaY;
                           }
@@ -1391,11 +1396,16 @@ export class App extends React.Component<any, AppState> {
                             e.shiftKey,
                           );
                         } else {
-                          element.width += deltaX;
                           if (e.shiftKey) {
-                            element.y += element.height - element.width;
-                            element.height = element.width;
+                            // Aspect ratio transformation
+                            element.width += deltaX;
+
+                            element.height += deltaX;
+                            element.y -= deltaX;
                           } else {
+                            // Free transformation
+                            element.width += deltaX;
+
                             element.height -= deltaY;
                             element.y += deltaY;
                           }
@@ -1421,11 +1431,17 @@ export class App extends React.Component<any, AppState> {
                             e.shiftKey,
                           );
                         } else {
-                          element.width -= deltaX;
-                          element.x += deltaX;
                           if (e.shiftKey) {
-                            element.height = element.width;
+                            // Aspect ratio transformation
+                            element.width -= deltaX;
+                            element.x += deltaX;
+
+                            element.height -= deltaX;
                           } else {
+                            // Free transformation
+                            element.width -= deltaX;
+                            element.x += deltaX;
+
                             element.height += deltaY;
                           }
                         }
@@ -1451,10 +1467,14 @@ export class App extends React.Component<any, AppState> {
                           );
                         } else {
                           if (e.shiftKey) {
+                            // Aspect ratio transformation
                             element.width += deltaX;
-                            element.height = element.width;
+
+                            element.height += deltaX;
                           } else {
+                            // Free transformation
                             element.width += deltaX;
+
                             element.height += deltaY;
                           }
                         }
