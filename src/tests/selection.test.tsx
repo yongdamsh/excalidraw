@@ -5,6 +5,7 @@ import { App } from "../components/App";
 import * as Renderer from "../renderer/renderScene";
 import { KEYS } from "../keys";
 import { reseed } from "../random";
+import { ExcalidrawElement } from "../element/types";
 
 // Unmount ReactDOM from root
 ReactDOM.unmountComponentAtNode(document.getElementById("root")!);
@@ -233,6 +234,115 @@ describe("select single element on the scene", () => {
     expect(h.state.selectionElement).toBeNull();
     expect(h.elements.length).toEqual(1);
     expect(h.state.selectedElementIds[h.elements[0].id]).toBeTruthy();
+
+    h.elements.forEach((element) => expect(element).toMatchSnapshot());
+  });
+});
+
+describe("select multiple elements on the scene", () => {
+  it("select all", () => {
+    const { getByToolName, container } = render(<App />);
+    const canvas = container.querySelector("canvas")!;
+
+    /*
+        1 2 3 4 5 6 7 8 9
+      1
+      2      
+      3     🟥
+      4       🔶
+      5         🟡
+      6
+      7           
+      8
+      9
+    */
+    // create elements
+    fireEvent.click(getByToolName("rectangle"));
+    fireEvent.pointerDown(canvas, { clientX: 30, clientY: 30 });
+    fireEvent.pointerMove(canvas, { clientX: 40, clientY: 40 });
+    fireEvent.pointerUp(canvas);
+    fireEvent.keyDown(document, { key: KEYS.ESCAPE });
+
+    fireEvent.click(getByToolName("diamond"));
+    fireEvent.pointerDown(canvas, { clientX: 40, clientY: 40 });
+    fireEvent.pointerMove(canvas, { clientX: 50, clientY: 50 });
+    fireEvent.pointerUp(canvas);
+    fireEvent.keyDown(document, { key: KEYS.ESCAPE });
+
+    fireEvent.click(getByToolName("ellipse"));
+    fireEvent.pointerDown(canvas, { clientX: 50, clientY: 50 });
+    fireEvent.pointerMove(canvas, { clientX: 60, clientY: 60 });
+    fireEvent.pointerUp(canvas);
+    fireEvent.keyDown(document, { key: KEYS.ESCAPE });
+
+    const tool = getByToolName("selection");
+    fireEvent.click(tool);
+    fireEvent.pointerDown(canvas, { clientX: 20, clientY: 20 });
+    fireEvent.pointerMove(canvas, { clientX: 70, clientY: 70 });
+    fireEvent.pointerUp(canvas);
+
+    expect(renderScene).toHaveBeenCalledTimes(18);
+    expect(h.state.selectionElement).toBeNull();
+    expect(h.elements.length).toBe(3);
+    h.elements.forEach((element) => {
+      expect(h.state.selectedElementIds[element.id]).toBeTruthy();
+    });
+
+    h.elements.forEach((element) => expect(element).toMatchSnapshot());
+  });
+
+  it("select partials", () => {
+    const { getByToolName, container } = render(<App />);
+    const canvas = container.querySelector("canvas")!;
+
+    /*
+        1 2 3 4 5 6 7 8 9
+      1
+      2      
+      3     🟥
+      4       🔶
+      5         🟡
+      6
+      7           
+      8
+      9
+    */
+    // create elements
+    fireEvent.click(getByToolName("rectangle"));
+    fireEvent.pointerDown(canvas, { clientX: 30, clientY: 30 });
+    fireEvent.pointerMove(canvas, { clientX: 40, clientY: 40 });
+    fireEvent.pointerUp(canvas);
+    fireEvent.keyDown(document, { key: KEYS.ESCAPE });
+
+    fireEvent.click(getByToolName("diamond"));
+    fireEvent.pointerDown(canvas, { clientX: 40, clientY: 40 });
+    fireEvent.pointerMove(canvas, { clientX: 50, clientY: 50 });
+    fireEvent.pointerUp(canvas);
+    fireEvent.keyDown(document, { key: KEYS.ESCAPE });
+
+    fireEvent.click(getByToolName("ellipse"));
+    fireEvent.pointerDown(canvas, { clientX: 50, clientY: 50 });
+    fireEvent.pointerMove(canvas, { clientX: 60, clientY: 60 });
+    fireEvent.pointerUp(canvas);
+    fireEvent.keyDown(document, { key: KEYS.ESCAPE });
+
+    const tool = getByToolName("selection");
+    fireEvent.click(tool);
+    // Start dragging from an empty spot
+    fireEvent.pointerDown(canvas, { clientX: 55, clientY: 35 });
+    fireEvent.pointerMove(canvas, { clientX: 35, clientY: 55 });
+    fireEvent.pointerUp(canvas);
+
+    expect(renderScene).toHaveBeenCalledTimes(18);
+    expect(h.state.selectionElement).toBeNull();
+    expect(h.elements.length).toBe(3);
+
+    const selectedElements: ExcalidrawElement[] = h.elements.filter(
+      (element) => h.state.selectedElementIds[element.id],
+    );
+
+    expect(selectedElements.length).toBe(1);
+    expect(selectedElements[0].type).toEqual("diamond");
 
     h.elements.forEach((element) => expect(element).toMatchSnapshot());
   });

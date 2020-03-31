@@ -1,5 +1,131 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`select multiple elements on the scene select all 1`] = `
+Object {
+  "backgroundColor": "transparent",
+  "fillStyle": "hachure",
+  "height": 10,
+  "id": "id0",
+  "isDeleted": false,
+  "opacity": 100,
+  "roughness": 1,
+  "seed": 337897,
+  "strokeColor": "#000000",
+  "strokeWidth": 1,
+  "type": "rectangle",
+  "version": 2,
+  "versionNonce": 1278240551,
+  "width": 10,
+  "x": 30,
+  "y": 30,
+}
+`;
+
+exports[`select multiple elements on the scene select all 2`] = `
+Object {
+  "backgroundColor": "transparent",
+  "fillStyle": "hachure",
+  "height": 10,
+  "id": "id1",
+  "isDeleted": false,
+  "opacity": 100,
+  "roughness": 1,
+  "seed": 453191,
+  "strokeColor": "#000000",
+  "strokeWidth": 1,
+  "type": "diamond",
+  "version": 2,
+  "versionNonce": 401146281,
+  "width": 10,
+  "x": 40,
+  "y": 40,
+}
+`;
+
+exports[`select multiple elements on the scene select all 3`] = `
+Object {
+  "backgroundColor": "transparent",
+  "fillStyle": "hachure",
+  "height": 10,
+  "id": "id2",
+  "isDeleted": false,
+  "opacity": 100,
+  "roughness": 1,
+  "seed": 1116226695,
+  "strokeColor": "#000000",
+  "strokeWidth": 1,
+  "type": "ellipse",
+  "version": 2,
+  "versionNonce": 1014066025,
+  "width": 10,
+  "x": 50,
+  "y": 50,
+}
+`;
+
+exports[`select multiple elements on the scene select partials 1`] = `
+Object {
+  "backgroundColor": "transparent",
+  "fillStyle": "hachure",
+  "height": 10,
+  "id": "id0",
+  "isDeleted": false,
+  "opacity": 100,
+  "roughness": 1,
+  "seed": 337897,
+  "strokeColor": "#000000",
+  "strokeWidth": 1,
+  "type": "rectangle",
+  "version": 2,
+  "versionNonce": 1278240551,
+  "width": 10,
+  "x": 30,
+  "y": 30,
+}
+`;
+
+exports[`select multiple elements on the scene select partials 2`] = `
+Object {
+  "backgroundColor": "transparent",
+  "fillStyle": "hachure",
+  "height": 10,
+  "id": "id1",
+  "isDeleted": false,
+  "opacity": 100,
+  "roughness": 1,
+  "seed": 453191,
+  "strokeColor": "#000000",
+  "strokeWidth": 1,
+  "type": "diamond",
+  "version": 2,
+  "versionNonce": 401146281,
+  "width": 10,
+  "x": 40,
+  "y": 40,
+}
+`;
+
+exports[`select multiple elements on the scene select partials 3`] = `
+Object {
+  "backgroundColor": "transparent",
+  "fillStyle": "hachure",
+  "height": 10,
+  "id": "id2",
+  "isDeleted": false,
+  "opacity": 100,
+  "roughness": 1,
+  "seed": 1116226695,
+  "strokeColor": "#000000",
+  "strokeWidth": 1,
+  "type": "ellipse",
+  "version": 2,
+  "versionNonce": 1014066025,
+  "width": 10,
+  "x": 50,
+  "y": 50,
+}
+`;
+
 exports[`select single element on the scene arrow 1`] = `
 Object {
   "backgroundColor": "transparent",

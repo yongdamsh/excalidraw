@@ -4,6 +4,7 @@ import { RoughSVG } from "roughjs/bin/svg";
 import { FlooredNumber, AppState } from "../types";
 import { ExcalidrawElement } from "../element/types";
 import { getElementAbsoluteCoords, handlerRectangles } from "../element";
+import { getCommonBounds } from "../element/bounds";
 
 import { roundRect } from "./roundRect";
 import { SceneState } from "../scene/types";
@@ -99,7 +100,7 @@ export function renderScene(
     renderElement(element, rc, context, renderOptimizations, sceneState);
   });
 
-  // Pain selection element
+  // Paint selection element
   if (selectionElement) {
     renderElement(
       selectionElement,
@@ -110,23 +111,19 @@ export function renderScene(
     );
   }
 
-  // Pain selected elements
+  // Paint selected elements
   if (renderSelection) {
     const selectedElements = getSelectedElements(elements, appState);
-    const dashledLinePadding = 4 / sceneState.zoom;
 
-    context.translate(sceneState.scrollX, sceneState.scrollY);
-    selectedElements.forEach((element) => {
-      const [
-        elementX1,
-        elementY1,
-        elementX2,
-        elementY2,
-      ] = getElementAbsoluteCoords(element);
+    if (selectedElements.length > 0) {
+      context.translate(sceneState.scrollX, sceneState.scrollY);
 
+      const [elementX1, elementY1, elementX2, elementY2] = getCommonBounds(
+        selectedElements,
+      );
       const elementWidth = elementX2 - elementX1;
       const elementHeight = elementY2 - elementY1;
-
+      const dashledLinePadding = 4 / sceneState.zoom;
       const initialLineDash = context.getLineDash();
       context.setLineDash([8 / sceneState.zoom, 4 / sceneState.zoom]);
       const lineWidth = context.lineWidth;
@@ -139,8 +136,8 @@ export function renderScene(
       );
       context.lineWidth = lineWidth;
       context.setLineDash(initialLineDash);
-    });
-    context.translate(-sceneState.scrollX, -sceneState.scrollY);
+      context.translate(-sceneState.scrollX, -sceneState.scrollY);
+    }
 
     // Paint resize handlers
     if (selectedElements.length === 1 && selectedElements[0].type !== "text") {
